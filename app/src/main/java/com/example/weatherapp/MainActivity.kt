@@ -2,6 +2,7 @@ package com.example.weatherapp
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.Dialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -16,6 +17,7 @@ import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
+import com.example.weatherapp.models.Weather
 import com.example.weatherapp.models.WeatherResponse
 import com.example.weatherapp.network.WeatherService
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -35,6 +37,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 class MainActivity : AppCompatActivity() {
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
+
+    private var mProgressDialog: Dialog?= null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,13 +87,19 @@ class MainActivity : AppCompatActivity() {
             val retrofit : Retrofit = Retrofit.Builder().baseUrl(Constants.BASE_URL).addConverterFactory(GsonConverterFactory.create()).build()
             val service: WeatherService = retrofit.create<WeatherService>(WeatherService::class.java)
             val listCall: Call<WeatherResponse> = service.getWeather(latitude, longitude, Constants.METRIC_UNIT, Constants.APP_ID)
+
+            showCustomProgressDialog()
+
             listCall.enqueue(object: Callback<WeatherResponse>{
                 override fun onResponse(
                     call: Call<WeatherResponse>,
                     response: Response<WeatherResponse>?
                 ) {
                     if(response!!.isSuccessful){
+                        hideProgressDialog()
+
                         val weatherList: WeatherResponse? = response.body()
+                        setupUI(weatherList!!)
                     }else{
                         val rc = response.code()
                         when(rc){
@@ -106,7 +116,9 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 override fun onFailure(call: Call<WeatherResponse>, t: Throwable) {
+
                     Log.e("Errorr", t!!.message.toString())
+                    hideProgressDialog()
                 }
 
             })
@@ -151,5 +163,22 @@ class MainActivity : AppCompatActivity() {
     private fun isLocationEnabled(): Boolean{
         val locationManager: LocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+    }
+
+    private fun showCustomProgressDialog(){
+        mProgressDialog = Dialog(this)
+        mProgressDialog!!.setContentView(R.layout.dialog_custom_progress)
+        mProgressDialog!!.show()
+    }
+    private fun hideProgressDialog(){
+        if(mProgressDialog != null){
+            mProgressDialog!!.dismiss()
+        }
+    }
+
+    private fun setupUI(weatherList: WeatherResponse){
+        for(i in weatherList.weather.indices){
+            Log.i("Weather Name", weatherList.weather.toString())
+        }
     }
 }
