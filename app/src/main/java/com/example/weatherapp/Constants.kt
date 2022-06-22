@@ -10,6 +10,7 @@ object Constants{
     const val APP_ID: String = "I removed because it is not save on github"
     const val BASE_URL : String ="I removed because it is not save on github"
     const val METRIC_UNIT: String = "metric"
+    //
 
     fun isNetworkAvailable(context: Context): Boolean{
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
